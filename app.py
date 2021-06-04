@@ -273,9 +273,12 @@ def sell():
                 shares_have = int(row[1])
                 break
 
+        print("SHARES AND SHARES HAVE")
+        print(shares)
+        print(shares_have)
         # if selected more shares than currently owned
         if shares > shares_have:
-            apology("too many shares")
+            return apology("too many shares")
         else:
             price = lookup(symbol)
             price = price["price"]
