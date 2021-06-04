@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup
 from datetime import datetime
 
 ID = 0
@@ -38,9 +38,6 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-# Custom filter
-app.jinja_env.filters["usd"] = usd
-
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
@@ -68,9 +65,6 @@ def index():
     rows = db.fetchall()
     rows = list(rows)
 
-    print("ROWS:????????//// ")
-    print(rows)
-
     total = 0
 
     printRows = []
@@ -78,7 +72,6 @@ def index():
     for row in rows:
         response = lookup(row[0])
         oneRow = {}
-        print(response)
         oneRow["symbol"] = row[0]
         oneRow["price"] = response["price"]
         oneRow["name"] = response["name"]
@@ -90,7 +83,6 @@ def index():
     db.execute("SELECT cash FROM users WHERE id=?", ((session['user_id']),))
     cash = db.fetchall()
     cash = cash[0][0]
-    print(cash)
     total += cash
 
     return render_template("index.html", rows=printRows, cash=cash, total=total)
@@ -304,9 +296,12 @@ def sell():
 def addCash():
     if request.method == "POST":
         newcash = float(request.form.get("cash"))
-        oldcash = db.execute("SELECT cash FROM users WHERE id=?", session["user_id"])[0]["cash"]
+        db.execute("SELECT cash FROM users WHERE id=?", ((session['user_id']),))
+        oldcash = db.fetchall()
+        oldcash = oldcash[0][0]
         # add to database
-        db.execute("UPDATE users SET cash=? WHERE id=?", oldcash + newcash, session["user_id"])
+        totalcash = newcash + oldcash
+        db.execute("UPDATE users SET cash=? WHERE id=?", (totalcash, session["user_id"],))
         return redirect("/")
     else:
         return render_template("addcash.html")
